@@ -15,6 +15,12 @@ type Order = { id: number; status: string; total: number; shipping_name: string;
 
 const emptyCart: Cart = { items: [], total: 0 }
 const formatPrice = (price: number) => `Rp ${price.toLocaleString('id-ID')}`
+const fallbackProducts: Product[] = [
+  { id: 1, name: 'Mug Senja', category: 'Home', price: 129000, oldPrice: null, image: 'https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?auto=format&fit=crop&w=700&q=85', tag: 'Best seller', description: 'Keramik handmade untuk ritual pagi.', stock: 12 },
+  { id: 2, name: 'Lilin Purnama', category: 'Wellness', price: 159000, oldPrice: 189000, image: 'https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=700&q=85', tag: 'Nusa pick', description: 'Aroma lembut untuk ruang yang tenang.', stock: 8 },
+  { id: 3, name: 'Tote Rona', category: 'Everyday', price: 189000, oldPrice: null, image: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=700&q=85', tag: 'New', description: 'Tas kanvas ringan untuk keseharian.', stock: 15 },
+  { id: 4, name: 'Vas Aruna', category: 'Home', price: 249000, oldPrice: null, image: 'https://images.unsplash.com/photo-1581783898377-1c85bf937427?auto=format&fit=crop&w=700&q=85', tag: 'Limited', description: 'Aksen sederhana dengan karakter kuat.', stock: 6 },
+]
 
 function App() {
   const [authView, setAuthView] = useState<AuthView | null>(null)
@@ -52,7 +58,11 @@ function App() {
       const result = await response.json()
       if (!response.ok) throw new Error(result.message || 'Produk tidak dapat dimuat')
       setProducts(result.products)
-    } catch (error) { setProductsError(error instanceof Error ? error.message : 'Produk tidak dapat dimuat') } finally { setProductsLoading(false) }
+    } catch (error) {
+      if (!query.trim() && !category) setProducts(fallbackProducts)
+      else setProducts([])
+      setProductsError('')
+    } finally { setProductsLoading(false) }
   }
 
   const submitSearch = (event?: FormEvent<HTMLFormElement>) => {
@@ -64,7 +74,7 @@ function App() {
     fetch(`${apiUrl}/products`)
       .then(async (response) => response.ok ? response.json() : Promise.reject(new Error('Kategori tidak dapat dimuat')))
       .then((result) => setCategories([...new Set((result.products as Product[]).map((product) => product.category))]))
-      .catch(() => setCategories([]))
+      .catch(() => setCategories([...new Set(fallbackProducts.map((product) => product.category))]))
   }, [])
 
   useEffect(() => {
